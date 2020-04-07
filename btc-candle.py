@@ -37,10 +37,11 @@ y_train = training_set[1:len(training_set)]
 
 
 regressor = Sequential()
-regressor.add(LSTM(4, activation='sigmoid', input_shape=(None, 1)))
+regressor.add(LSTM(4, activation='sigmoid', input_shape=(None, 1), return_sequences=True))
+regressor.add(LSTM(2, activation='sigmoid'))
 regressor.add(Dense(1))
 regressor.compile(optimizer='adam', loss='mean_squared_error')
-regressor.fit(X_train, y_train, batch_size=5, epochs=100, verbose=0)
+regressor.fit(X_train, y_train, batch_size=5, epochs=100, verbose=2)
 
 
 test_set = df_test.values
