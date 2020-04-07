@@ -7,22 +7,11 @@ import numpy
 from matplotlib import pyplot as plt
 
 
-# def layer_maker(n_layers, n_nodes, activation, drop=None, d_rate=.5):
-#     """
-#     Create a specified number of hidden layers for an RNN
-#     Optional: Adds regularization option, dropout layer to prevent potential overfitting if necessary
-#     """
-#
-#     # Creating the specified number of hidden layers with the specified number of nodes
-#     for x in range(1, n_layers + 1):
-#         model.add(LSTM(n_nodes, activation=activation, return_sequences=True))
-#
-#         # Adds a Dropout layer after every Nth hidden layer (the 'drop' variable)
-#         try:
-#             if x % drop == 0:
-#                 model.add(Dropout(d_rate))
-#         except:
-#             pass
+# Configure memory usage
+# config = tensorflow.ConfigProto()
+# config.gpu_options.allow_growth = True
+# session = tensorflow.Session(config=config)
+
 
 
 def download_csv():
@@ -36,7 +25,7 @@ data = download_csv()
 
 # ** Trying to predict open price
 
-prediction_frame = 30
+prediction_frame = 100
 df_train = data.open[:len(data.close) - prediction_frame]
 df_test = data.open[len(data.close) - prediction_frame:]
 
@@ -47,18 +36,11 @@ X_train = numpy.reshape(X_train, (len(X_train), 1, 1))
 y_train = training_set[1:len(training_set)]
 
 
-num_units = 4
-activation_function = 'sigmoid'
-opmitizer = 'adam'
-loss_function = 'mean_squared_error'
-batch_size = 5
-num_epochs = 100
-
 regressor = Sequential()
-regressor.add(LSTM(units=num_units, activation=activation_function, input_shape=(None, 1)))
-regressor.add(Dense(units=1))
-regressor.compile(optimizer=opmitizer, loss=loss_function)
-regressor.fit(X_train, y_train, batch_size=batch_size, epochs=num_epochs)
+regressor.add(LSTM(4, activation='sigmoid', input_shape=(None, 1)))
+regressor.add(Dense(1))
+regressor.compile(optimizer='adam', loss='mean_squared_error')
+regressor.fit(X_train, y_train, batch_size=5, epochs=100, verbose=0)
 
 
 test_set = df_test.values
@@ -69,7 +51,9 @@ inputs = numpy.reshape(inputs, (len(test_set), 1, 1))
 predicted_price = regressor.predict(inputs)
 predicted_price = min_max_scaler.inverse_transform(predicted_price)
 
-plt.figure(figsize=(25, 25), dpi=80, facecolor='w', edgecolor='k')
+
+# Render chart
+plt.figure(figsize=(19, 10), facecolor='w', edgecolor='k')
 plt.plot(test_set, color='red', label='Real BTC price')
 plt.plot(predicted_price[:, 0], color='blue', label='Predicted BTC price')
 plt.title('BTC price prediction')
@@ -77,6 +61,20 @@ plt.xlabel('Time', fontsize=40)
 plt.ylabel('BTC Price(USD)', fontsize=40)
 plt.legend(loc='best')
 plt.show()
+
+
+# Render error
+plt.figure(figsize=(19, 10), facecolor='w', edgecolor='k')
+plt.plot(predicted_price[:, 0] - df_test.values, color='red', label='Error')
+plt.title('Error')
+plt.xlabel('Time', fontsize=40)
+plt.ylabel('Error size in USD', fontsize=40)
+plt.legend(loc='best')
+plt.show()
+
+
+# Print results
+print('Error: {:-9}'.format(mean_squared_error(predicted_price[:, 0], df_test.values)))
 
 
 
